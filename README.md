@@ -11,7 +11,7 @@ You know the bug. The one that drives you crazy.
 
 This package simply calculates the real width of the viewport and sets some css variables to the document root, so you can enjoy a life without horizontal scroll.
 
-- ✅ Use via css variables (`--vw` and `--100-vw`) or via the `useRealVw` hook
+- ✅ Use via css variables (`--vw`) or via the `useRealVw` hook
 - ✅ Listen to screen resizing
 - ✅ No flash on load (both SSR and SSG)
 
@@ -29,6 +29,7 @@ $ yarn add @basementstudio/next-real-vw
 
 ```js
 // pages/_app.{js,tsx}
+
 import { RealVwProvider } from "@basementstudio/next-real-vw";
 
 function MyApp({ Component, pageProps }) {
