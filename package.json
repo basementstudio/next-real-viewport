@@ -1,5 +1,7 @@
 {
-  "name": "next-themes",
+  "name": "@basementstudio/next-real-vw",
+  "repository": "git://github.com/basementstudio/next-real-vw.git",
+  "author": "Julián Benegas <julian@basement.studio>",
   "version": "0.0.10",
   "main": "./dist/index.js",
   "module": "./dist/index.modern.js",
@@ -9,6 +11,9 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
   "scripts": {
     "prepublish": "yarn build",
     "build": "microbundle --jsx React.createElement --compress --no-sourcemap"

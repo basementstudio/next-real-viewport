@@ -1,425 +1,75 @@
-# next-themes ![next-themes minzip package size](https://img.shields.io/bundlephobia/minzip/next-themes)
+# next-real-vw
 
-An abstraction for themes in your Next.js app.
+No more horizontal scroll when using `100vw` 🎉.
 
-- ✅ Perfect dark mode in 2 lines of code
-- ✅ System setting with prefers-color-scheme
+You know the bug. The one that drives you crazy.
+
+1. You need to set some element's width to be full screen.
+2. You use `width: 100vw`
+3. Then you get your desktop computer, and your mouse introduces a scrollbar. Huh.
+4. Now your site has a tiny horizontal scroll 🤮
+
+This package simply calculates the real width of the viewport and sets some css variables to the document root, so you can enjoy a life without horizontal scroll.
+
+- ✅ Use via css variables (`--vw` and `--100-vw`) or via the `useRealVw` hook
+- ✅ Listen to screen resizing
 - ✅ No flash on load (both SSR and SSG)
-- ✅ Sync theme across tabs and windows
-- ✅ Disable flashing when changing themes
-- ✅ Force pages to specific themes
-- ✅ Class or data attribute selector
-- ✅ `useTheme` hook
-
-Check out the [Live Example](https://next-themes-example.vercel.app/) to try it for yourself.
 
 ## Install
 
 ```bash
-$ npm install next-themes
+$ npm install @basementstudio/next-real-vw
 # or
-$ yarn add next-themes
+$ yarn add @basementstudio/next-real-vw
 ```
 
 ## Use
 
-You'll need a [Custom `App`](https://nextjs.org/docs/advanced-features/custom-app) to use next-themes. The simplest `_app` looks like this:
+`next-real-vw` works using React Context. Just use the exported provider anywhere you want to enjoy the _real_ vw. The recommended place to use it is in a custom `_app`.
 
 ```js
-// pages/_app.js
-
-function MyApp({ Component, pageProps }) {
-  return <Component {...pageProps} />
-}
-
-export default MyApp
-```
-
-Adding dark mode support takes 2 lines of code:
-
-```js
-import { ThemeProvider } from 'next-themes'
+// pages/_app.{js,tsx}
+import { RealVwProvider } from "@basementstudio/next-real-vw";
 
 function MyApp({ Component, pageProps }) {
   return (
-    <ThemeProvider>
+    <RealVwProvider>
       <Component {...pageProps} />
-    </ThemeProvider>
-  )
+    </RealVwProvider>
+  );
 }
 
-export default MyApp
+export default MyApp;
 ```
 
-That's it, your Next.js app fully supports dark mode, including System preference with `prefers-color-scheme`. The theme is also immediately synced between tabs. By default, next-themes modifies the `data-theme` attribute on the `html` element, which you can easily use to style your app:
+That's it, now you can use the css variables anywhere!
 
 ```css
-:root {
-  /* Your default theme */
-  --background: white;
-  --foreground: black;
+.fullWidth {
+  width: var(--100-vw);
 }
 
-[data-theme='dark'] {
-  --background: black;
-  --foreground: white;
+.halfWidth {
+  width: calc(var(--vw) * 50);
 }
 ```
 
-### useTheme
+### useRealVw
 
-Your UI will need to know the current theme and be able to change it. The `useTheme` hook provides theme information:
-
-```js
-import { useTheme } from 'next-themes'
-
-const ThemeChanger = () => {
-  const { theme, setTheme } = useTheme()
-
-  return (
-    <div>
-      The current theme is: {theme}
-      <button onClick={() => setTheme('light')}>Light Mode</button>
-      <button onClick={() => setTheme('dark')}>Dark Mode</button>
-    </div>
-  )
-}
-```
-
-> **Warning!** The above code is hydration _unsafe_ and will throw a hydration mismatch warning when rendering with SSG or SSR. This is because we cannot know the `theme` on the server, so it will always be `undefined` until mounted on the client.
->
-> You should delay rendering any theme toggling UI until mounted on the client. See the [example](#avoid-hydration-mismatch).
-
-## API
-
-Let's dig into the details.
-
-### ThemeProvider
-
-All your theme configuration is passed to ThemeProvider.
-
-- `storageKey = 'theme'`: Key used to store theme setting in localStorage
-- `defaultTheme = 'light'`: Default theme name
-- `forcedTheme`: Forced theme name for the current page (does not modify saved theme settings)
-- `enableSystem = true`: Whether to switch between `dark` and `light` based on `prefers-color-scheme`
-- `disableTransitionOnChange = false`: Optionally disable all CSS transitions when switching themes ([example](#disable-transitions-on-theme-change))
-- `themes = ['light', 'dark']`: List of theme names
-- `attribute = 'data-theme'`: HTML attribute modified based on the active theme
-  - accepts `class` and `data-*` (meaning any data attribute, `data-mode`, `data-color`, etc.) ([example](#class-instead-of-data-attribute))
-- `value`: Optional mapping of theme name to attribute value
-  - value is an `object` where key is the theme name and value is the attribute value ([example](#differing-dom-attribute-and-theme-name))
-
-### useTheme
-
-useTheme takes no parameters, but returns:
-
-- `theme`: Active theme name
-- `setTheme(name)`: Function to update the theme
-- `forcedTheme`: Forced page theme or falsy. If `forcedTheme` is set, you should disable any theme switching UI
-- `resolvedTheme`: If `enableSystem` is true and the active theme is "system", this returns whether the system preference resolved to "dark" or "light". Otherwise, identical to `theme`
-- `systemTheme`: If `enableSystem` is true, represents the System theme preference ("dark" or "light"), regardless what the active theme is
-- `themes`: The list of themes passed to `ThemeProvider` (with "system" appended, if `enableSystem` is true)
-
-Not too bad, right? Let's see how to use these properties with examples:
-
-## Examples
-
-The [Live Example](https://next-themes-example.vercel.app/) shows next-themes in action, with dark, light, system themes and pages with forced themes.
-
-### Use System preference by default
-
-The `defaultTheme` is "light". If you want to respect the System preference instead, set it to "system":
+Maybe you don't want to use the css variables (i don't know why anyone might not want to, they're awesome). But here's how to get the absolute values:
 
 ```js
-<ThemeProvider defaultTheme="system">
-```
+import { useRealVw } from "@basementstudio/next-real-vw";
 
-### Ignore System preference
+const FullScreenContainer = ({ children }) => {
+  const { vw, vwPx, cssVar, fullScreenCssVar } = useRealVw();
 
-If you don't want a System theme, disable it via `enableSystem`:
-
-```js
-<ThemeProvider enableSystem={false}>
-```
-
-### Class instead of data attribute
-
-If your Next.js app uses a class to style the page based on the theme, change the attribute prop to `class`:
-
-```js
-<ThemeProvider attribute="class">
-```
-
-Now, setting the theme to "dark" will set `class="dark"` on the `html` element.
-
-### Force page to a theme
-
-Let's say your cool new marketing page is dark mode only. The page should always use the dark theme, and changing the theme should have no effect. To force a theme on your Next.js pages, simply set a variable on the page component:
-
-```js
-// pages/awesome-page.js
-
-const Page = () => { ... }
-Page.theme = 'dark'
-export default Page
-```
-
-In your `_app`, read the variable and pass it to ThemeProvider:
-
-```js
-function MyApp({ Component, pageProps }) {
-  return (
-    <ThemeProvider forcedTheme={Component.theme || null}>
-      <Component {...pageProps} />
-    </ThemeProvider>
-  )
-}
-```
-
-Done! Your page is always dark theme (regardless of user preference), and calling `setTheme` from `useTheme` is now a no-op. However, you should make sure to disable any of your UI that would normally change the theme:
-
-```js
-const { forcedTheme } = useTheme()
-
-// Theme is forced, we shouldn't allow user to change the theme
-const disabled = !!forcedTheme
-```
-
-### Disable transitions on theme change
-
-I wrote about [this technique here](https://paco.sh/blog/disable-theme-transitions). We can forcefully disable all CSS transitions before the theme is changed, and re-enable them immediately afterwards. This ensures your UI with different transition durations won't feel inconsistent when changing the theme.
-
-To enable this behavior, pass the `disableTransitionOnChange` prop:
-
-```js
-<ThemeProvider disableTransitionOnChange>
-```
-
-### Differing DOM attribute and theme name
-
-The name of the active theme is used as both the localStorage value and the value of the DOM attribute. If the theme name is "pink", localStorage will contain `theme=pink` and the DOM will be `data-theme="pink"`. You **cannot** modify the localStorage value, but you **can** modify the DOM value.
-
-If we want the DOM to instead render `data-theme="my-pink-theme"` when the theme is "pink", pass the `value` prop:
-
-```js
-<ThemeProvider value={{ pink: 'my-pink-theme' }}>
-```
-
-Done! To be extra clear, this affects only the DOM. Here's how all the values will look:
-
-```js
-const { theme } = useTheme()
-// => "pink"
-
-localStorage.get('theme')
-// => "pink"
-
-document.documentElement.getAttribute('data-theme')
-// => "my-pink-theme"
-```
-
-### More than light and dark mode
-
-next-themes is designed to support any number of themes! Simply pass a list of themes:
-
-```js
-<ThemeProvider themes={['pink', 'red', 'blue']}>
-```
-
-> **Note!** When you pass `themes`, the default set of themes ("light" and "dark") are overridden. Make sure you include those if you still want your light and dark themes:
-
-```js
-<ThemeProvider themes={['pink', 'red', 'blue', 'light', 'dark']}>
-```
-
-### Without CSS variables
-
-This library does not rely on your theme styling using CSS variables. You can hard-code the values in your CSS, and everything will work as expected (without any flashing):
-
-```css
-html,
-body {
-  color: #000;
-  background: #fff;
-}
-
-[data-theme='dark'],
-[data-theme='dark'] body {
-  color: #fff;
-  background: #000;
-}
-```
-
-### With Styled Components and any CSS-in-JS
-
-Next Themes is completely CSS independent, it will work with any library. For example, with Styled Components you just need to `createGlobalStyle` in your custom App:
-
-```js
-// pages/_app.js
-import { createGlobalStyle } from 'styled-components'
-import { ThemeProvider } from 'next-themes'
-
-// Your themeing variables
-const GlobalStyle = createGlobalStyle`
-  :root {
-    --fg: #000;
-    --bg: #fff;
-  }
-
-  [data-theme="dark"] {
-    --fg: #fff;
-    --bg: #000;
-  }
-`
-
-function MyApp({ Component, pageProps }) {
-  return (
-    <>
-      <GlobalStyle />
-      <ThemeProvider>
-        <Component {...pageProps} />
-      </ThemeProvider>
-    </>
-  )
-}
-```
-
-### Avoid Hydration Mismatch
-
-Because we cannot know the `theme` on the server, many of the values returned from `useTheme` will be `undefined` until mounted on the client. This means if you try to render UI based on the current theme before mounting on the client, you will see a hydration mismatch error.
-
-The following code sample is **unsafe**:
-
-```js
-import { useTheme } from 'next-themes'
-
-const ThemeChanger = () => {
-  const { theme, setTheme } = useTheme()
-
-  return (
-    <div>
-      The current theme is: {theme}
-      <button onClick={() => setTheme('light')}>Light Mode</button>
-      <button onClick={() => setTheme('dark')}>Dark Mode</button>
-    </div>
-  )
-}
-```
-
-To fix this, make sure you only render UI that uses the current theme when the page is mounted on the client:
-
-```js
-import { useTheme } from 'next-themes'
-
-const ThemeChanger = () => {
-  const [mounted, setMounted] = useState(false)
-  const { theme, setTheme } = useTheme()
-
-  // When mounted on client, now we can show the UI
-  useEffect(() => setMounted(true), [])
-
-  if (!mounted) return null
-
-  return (
-    <div>
-      The current theme is: {theme}
-      <button onClick={() => setTheme('light')}>Light Mode</button>
-      <button onClick={() => setTheme('dark')}>Dark Mode</button>
-    </div>
-  )
-}
-```
-
-To avoid Content Layout Shift, consider rendering a skeleton until mounted on the client side.
-
-### With Tailwind
-
-[Visit the live example](https://next-themes-tailwind.vercel.app) • [View the example source code](https://github.com/pacocoursey/next-themes/tree/master/examples/tailwind)
-
-> NOTE! Tailwind only supports dark mode in version >2.
-
-In your `tailwind.config.js`, set the dark mode property to class:
-
-```js
-// tailwind.config.js
-module.exports = {
-  darkMode: 'class'
-}
-```
-
-Set the attribute for your Theme Provider to class:
-
-```js
-// pages/_app.js
-<ThemeProvider attribute="class">
-```
-
-If you're using the `value` prop to specify different attribute values, make sure your dark theme explicitly uses the "dark" value, as required by Tailwind.
-
-That's it! Now you can use dark-mode specific classes:
-
-```js
-<h1 className="text-black dark:text-white">
+  return <div style={{ width: vw * 100 }}>{children}</div>;
+};
 ```
 
 ## Discussion
 
-### The Flash
+### The Layout Shift
 
-ThemeProvider automatically injects a script into `next/head` to update the `html` element with the correct attributes before the rest of your page loads. This means the page will not flash under any circumstances, including forced themes, system theme, multiple themes, and incognito. No `noflash.js` required.
-
-## FAQ
-
----
-
-**Why is my page still flashing?**
-
-In Next.js dev mode, the page may still flash. When you build your app in production mode, there will be no flashing.
-
----
-
-**Why do I get server/client mismatch error?**
-
-When using `useTheme`, you will use see a hydration mismatch error when rendering UI that relies on the current theme. This is because many of the values returned by `useTheme` are undefined on the server, since we can't read `localStorage` until mounting on the client. See the [example](#avoid-hydration-mismatch) for how to fix this error.
-
----
-
-**Do I need to use CSS variables with this library?**
-
-Nope. See the [example](#without-css-variables).
-
----
-
-**Can I set the class or data attribute on the body or another element?**
-
-Nope. If you have a good reason for supporting this feature, please open an issue.
-
----
-
-**Can I use this package with Gatsby or CRA?**
-
-Nope.
-
----
-
-**Is the injected script minified?**
-
-Yes, using Terser.
-
----
-
-**Why is `resolvedTheme` necessary?**
-
-When supporting the System theme preference, you want to make sure that's reflected in your UI. This means your buttons, selects, dropdowns, or whatever you use to indicate the current theme should say "System" when the System theme preference is active.
-
-If we didn't distinguish between `theme` and `resolvedTheme`, the UI would show "Dark" or "Light", when it should really be "System".
-
-`resolvedTheme` is then useful for modifying behavior or styles at runtime:
-
-```js
-const { resolvedTheme } = useTheme()
-
-<div style={{ color: resolvedTheme === 'dark' ? white : black }}>
-```
-
-If we didn't have `resolvedTheme` and only used `theme`, you'd lose information about the state of your UI (you would only know the theme is "system", and not what it resolved to).
+Inspired by next-themes, `RealVwProvider` automatically injects a script into `next/head` to update the `html` element with the css variable values before the rest of your page loads. This means the page will not have layout shift under any circumstances.
