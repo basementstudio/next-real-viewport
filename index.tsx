@@ -1,271 +1,63 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  memo
-} from 'react'
-import NextHead from 'next/head'
+import Head from "next/head";
+import { createContext, memo, useContext, useEffect, useState } from "react";
 
-interface UseThemeProps {
-  themes: string[]
-  setTheme: (theme: string) => void
-  theme?: string
-  forcedTheme?: string
-  resolvedTheme?: string
-  systemTheme?: 'dark' | 'light'
+// All this to take into account the scrollbar, haha.
+
+interface Context {
+  vw: number | undefined;
+  vwPx: string | undefined;
+  cssVar: string;
 }
 
-const ThemeContext = createContext<UseThemeProps>({
-  setTheme: (_) => {},
-  themes: []
-})
-export const useTheme = () => useContext(ThemeContext)
+const RealVwContext = createContext<Context | undefined>(undefined);
 
-interface ValueObject {
-  [themeName: string]: string
-}
+const cssVar = "--vw";
+const fullScreenWidth = "calc(var(--vw) * 100)";
 
-export interface ThemeProviderProps {
-  forcedTheme?: string
-  disableTransitionOnChange?: boolean
-  enableSystem?: boolean
-  storageKey?: string
-  themes?: string[]
-  defaultTheme?: string
-  attribute?: string
-  value?: ValueObject
-}
+const RealVwScript = memo(() => (
+  <Head>
+    <script
+      key="real-vw-script"
+      dangerouslySetInnerHTML={{
+        __html: `(function() {
+            var d = document.documentElement
+            d.style.setProperty('${cssVar}', d.clientWidth / 100 + 'px')
+        }())`,
+      }}
+    />
+  </Head>
+));
 
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({
-  forcedTheme,
-  disableTransitionOnChange = false,
-  enableSystem = true,
-  storageKey = 'theme',
-  themes = ['light', 'dark'],
-  defaultTheme = 'light',
-  attribute = 'data-theme',
-  value,
-  children
-}) => {
-  const [theme, setThemeState] = useState(() => getTheme(storageKey))
-  const [resolvedTheme, setResolvedTheme] = useState(() => getTheme(storageKey))
-  const attrs = !value ? themes : Object.values(value)
-
-  const changeTheme = useCallback((theme, updateStorage = true) => {
-    const name = value?.[theme] || theme
-
-    const enable = disableTransitionOnChange ? disableAnimation() : null
-
-    if (updateStorage) {
-      try {
-        localStorage.setItem(storageKey, theme)
-      } catch (e) {
-        // Unsupported
-      }
-    }
-
-    const d = document.documentElement
-
-    if (attribute === 'class') {
-      d.classList.remove(...attrs)
-      d.classList.add(name)
-    } else {
-      d.setAttribute(attribute, name)
-    }
-    enable?.()
-    // All of these deps are stable and should never change
-  }, []) // eslint-disable-line
-
-  const handleMediaQuery = useCallback(
-    (e) => {
-      const isDark = e.matches
-      const systemTheme = isDark ? 'dark' : 'light'
-      setResolvedTheme(systemTheme)
-
-      if (theme === 'system') changeTheme(systemTheme, false)
-    },
-    [theme] // eslint-disable-line
-  )
+const RealVwProvider: React.FC = ({ children }) => {
+  const [vw, setVw] = useState<number>();
 
   useEffect(() => {
-    if (!enableSystem) {
-      return
+    function handleResize() {
+      const vw = document.documentElement.clientWidth / 100;
+      document.documentElement.style.setProperty(cssVar, `${vw}px`);
+      setVw(vw);
     }
-
-    // Always listen to System preference
-    const media = window.matchMedia('(prefers-color-scheme: dark)')
-    media.addListener(handleMediaQuery)
-    handleMediaQuery(media)
-
-    return () => media.removeListener(handleMediaQuery)
-  }, [handleMediaQuery]) // eslint-disable-line
-
-  const setTheme = useCallback(
-    (newTheme) => {
-      if (forcedTheme) {
-        return
-      }
-
-      changeTheme(newTheme)
-      setThemeState(newTheme)
-    },
-    // All of these deps are stable and should never change
-    [] // eslint-disable-line
-  )
-
-  useEffect(() => {
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key !== storageKey) {
-        return
-      }
-
-      const theme = e.newValue
-      setTheme(theme)
-    }
-
-    window.addEventListener('storage', handleStorage)
-    return () => window.removeEventListener('storage', handleStorage)
-    // All of these deps are stable and should never change
-  }, []) // eslint-disable-line
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
-    <ThemeContext.Provider
-      value={{
-        theme,
-        setTheme,
-        forcedTheme,
-        resolvedTheme: theme === 'system' ? resolvedTheme : theme,
-        themes: enableSystem ? [...themes, 'system'] : themes,
-        systemTheme: (enableSystem ? resolvedTheme : undefined) as
-          | 'light'
-          | 'dark'
-          | undefined
-      }}
+    <RealVwContext.Provider
+      value={{ vw, cssVar, vwPx: vw ? `${vw}px` : undefined }}
     >
-      <ThemeScript
-        {...{
-          forcedTheme,
-          storageKey,
-          attribute,
-          value,
-          enableSystem,
-          defaultTheme,
-          attrs
-        }}
-      />
+      <RealVwScript />
       {children}
-    </ThemeContext.Provider>
-  )
-}
+    </RealVwContext.Provider>
+  );
+};
 
-const ThemeScript = memo(
-  ({
-    forcedTheme,
-    storageKey,
-    attribute,
-    enableSystem,
-    defaultTheme,
-    value,
-    attrs
-  }: {
-    forcedTheme?: string
-    storageKey: string
-    attribute?: string
-    enableSystem?: boolean
-    defaultTheme: string
-    value?: ValueObject
-    attrs: any
-  }) => {
-    // Code-golfing the amount of characters in the script
-    const optimization = (() => {
-      if (attribute === 'class') {
-        const removeClasses = `d.remove(${attrs
-          .map((t: string) => `'${t}'`)
-          .join(',')})`
-
-        return `var d=document.documentElement.classList;${removeClasses};`
-      } else {
-        return `var d=document.documentElement;`
-      }
-    })()
-
-    const updateDOM = (name: string, literal?: boolean) => {
-      name = value?.[name] || name
-      const val = literal ? name : `'${name}'`
-
-      if (attribute === 'class') {
-        return `d.add(${val})`
-      }
-
-      return `d.setAttribute('${attribute}', ${val})`
-    }
-
-    return (
-      <NextHead>
-        {forcedTheme ? (
-          <script
-            key="next-themes-script"
-            dangerouslySetInnerHTML={{
-              // These are minified via Terser and then updated by hand, don't recommend
-              // prettier-ignore
-              __html: `!function(){${optimization}${updateDOM(forcedTheme)}}()`
-            }}
-          />
-        ) : enableSystem ? (
-          <script
-            key="next-themes-script"
-            dangerouslySetInnerHTML={{
-              // prettier-ignore
-              __html: `!function(){try {${optimization}var e=localStorage.getItem('${storageKey}');if(!e)return localStorage.setItem('${storageKey}','${defaultTheme}'),${updateDOM(defaultTheme)};if("system"===e){var t="(prefers-color-scheme: dark)",m=window.matchMedia(t);m.media!==t||m.matches?${updateDOM('dark')}:${updateDOM('light')}}else ${value ? `var x=${JSON.stringify(value)};` : ''}${updateDOM(value ? 'x[e]' : 'e', true)}}catch(e){}}()`
-            }}
-          />
-        ) : (
-          <script
-            key="next-themes-script"
-            dangerouslySetInnerHTML={{
-              // prettier-ignore
-              __html: `!function(){try{${optimization}var t=localStorage.getItem("${storageKey}");if(!t)return localStorage.setItem("${storageKey}","${defaultTheme}"),${updateDOM(defaultTheme)};${value ? `var x=${JSON.stringify(value)};` : ''}${updateDOM(value ? 'x[t]' : 't', true)}}catch(t){}}();`
-            }}
-          />
-        )}
-      </NextHead>
-    )
-  },
-  (prevProps, nextProps) => {
-    // Only re-render when forcedTheme changes
-    // the rest of the props should be completely stable
-    if (prevProps.forcedTheme !== nextProps.forcedTheme) return false
-    return true
+const useRealVw = () => {
+  const context = useContext(RealVwContext);
+  if (typeof context === "undefined") {
+    throw new Error("useRealVw must be used below a <RealVwProvider>");
   }
-)
+  return context;
+};
 
-// Helpers
-const getTheme = (key: string) => {
-  if (typeof window === 'undefined') return undefined
-  let theme
-  try {
-    theme = localStorage.getItem(key) || undefined
-  } catch (e) {
-    // Unsupported
-  }
-  return theme
-}
-
-const disableAnimation = () => {
-  const css = document.createElement('style')
-  css.appendChild(
-    document.createTextNode(
-      `*{-webkit-transition:none!important;-moz-transition:none!important;-o-transition:none!important;-ms-transition:none!important;transition:none!important}`
-    )
-  )
-  document.head.appendChild(css)
-
-  return () => {
-    // Force restyle
-    // The CSS property doesn't matter, use "top" because it's short
-    ;(() => window.getComputedStyle(css).top)()
-    document.head.removeChild(css)
-  }
-}
+export { RealVwProvider, cssVar, fullScreenWidth, useRealVw };
