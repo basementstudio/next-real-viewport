@@ -18,9 +18,13 @@ This package simply calculates the real width of the viewport and sets some css 
 ## Install
 
 ```bash
-$ npm install @basementstudio/next-real-vw
-# or
-$ yarn add @basementstudio/next-real-vw
+npm install next-real-vw
+```
+
+or
+
+```bash
+yarn add next-real-vw
 ```
 
 ## Use
