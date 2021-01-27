@@ -62,9 +62,17 @@ Maybe you don't want to use the css variables (i don't know why anyone might not
 import { useRealVw } from "@basementstudio/next-real-vw";
 
 const FullScreenContainer = ({ children }) => {
-  const { vw, vwPx, cssVar, fullScreenCssVar } = useRealVw();
+  const { vw, cssVar, fullScreenCss } = useRealVw();
 
-  return <div style={{ width: vw * 100 }}>{children}</div>;
+  return (
+    <div
+      style={{
+        width: vw * 100, // or fullScreenCss
+      }}
+    >
+      {children}
+    </div>
+  );
 };
 ```
 

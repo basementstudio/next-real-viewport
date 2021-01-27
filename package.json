@@ -2,7 +2,7 @@
   "name": "@basementstudio/next-real-vw",
   "repository": "git://github.com/basementstudio/next-real-vw.git",
   "author": "Julián Benegas <julian@basement.studio>",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "main": "./dist/index.js",
   "module": "./dist/index.modern.js",
   "types": "./dist/index.d.ts",

@@ -1,15 +1,20 @@
 import Head from "next/head";
-import { createContext, memo, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  memo,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 // All this to take into account the scrollbar, haha.
 
 const cssVar = "--vw";
-const fullScreenCssVar = "--100-vw";
+const fullScreenCss = `calc(var(${cssVar}) * 100)`;
 interface Context {
   vw: number | undefined;
-  vwPx: string | undefined;
   cssVar: typeof cssVar;
-  fullScreenCssVar: typeof fullScreenCssVar;
+  fullScreenCss: typeof fullScreenCss;
 }
 
 const RealVwContext = createContext<Context | undefined>(undefined);
@@ -22,7 +27,6 @@ const RealVwScript = memo(() => (
         __html: `(function() {
             var d = document.documentElement
             d.style.setProperty('${cssVar}', d.clientWidth / 100 + 'px')
-            d.style.setProperty('${fullScreenCssVar}', 'calc(var(${cssVar}) * 100)')
         }())`,
       }}
     />
@@ -36,10 +40,6 @@ const RealVwProvider: React.FC = ({ children }) => {
     function handleResize() {
       const vw = document.documentElement.clientWidth / 100;
       document.documentElement.style.setProperty(cssVar, `${vw}px`);
-      document.documentElement.style.setProperty(
-        fullScreenCssVar,
-        `calc(var(${cssVar}) * 100)`
-      );
       setVw(vw);
     }
     handleResize();
@@ -48,9 +48,7 @@ const RealVwProvider: React.FC = ({ children }) => {
   }, []);
 
   return (
-    <RealVwContext.Provider
-      value={{ vw, cssVar, fullScreenCssVar, vwPx: vw ? `${vw}px` : undefined }}
-    >
+    <RealVwContext.Provider value={{ vw, cssVar, fullScreenCss }}>
       <RealVwScript />
       {children}
     </RealVwContext.Provider>
@@ -65,4 +63,4 @@ const useRealVw = () => {
   return context;
 };
 
-export { RealVwProvider, cssVar, fullScreenCssVar, useRealVw };
+export { RealVwProvider, cssVar, fullScreenCss, useRealVw };
