@@ -25,7 +25,7 @@ $ yarn add @basementstudio/next-real-vw
 
 ## Use
 
-`next-real-vw` works using React Context. Just use the exported provider anywhere you want to enjoy the _real_ vw. The recommended place to use it is in a custom `_app`.
+`next-real-vw` works using React Context. Just use the exported provider anywhere you want to enjoy the _real_ vw. The recommended place to use it is in a custom [`_app`](https://nextjs.org/docs/advanced-features/custom-app).
 
 ```js
 // pages/_app.{js,tsx}
@@ -46,7 +46,7 @@ That's it, now you can use the css variables anywhere!
 
 ```css
 .fullWidth {
-  width: var(--100-vw);
+  width: calc(var(--vw) * 100);
 }
 
 .halfWidth {
@@ -80,4 +80,4 @@ const FullScreenContainer = ({ children }) => {
 
 ### The Layout Shift
 
-Inspired by next-themes, `RealVwProvider` automatically injects a script into `next/head` to update the `html` element with the css variable values before the rest of your page loads. This means the page will not have layout shift under any circumstances.
+Inspired by [next-themes](https://github.com/pacocoursey/next-themes), `RealVwProvider` automatically injects a script into `next/head` to update the `html` element with the css variable values before the rest of your page loads. This means the page will not have layout shift under any circumstances.
