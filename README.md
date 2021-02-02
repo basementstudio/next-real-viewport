@@ -27,9 +27,34 @@ or
 yarn add next-real-vw
 ```
 
-## Use
+## Set Up
 
-`next-real-vw` works using React Context. Just use the exported provider anywhere you want to enjoy the _real_ vw. The recommended place to use it is in a custom [`_app`](https://nextjs.org/docs/advanced-features/custom-app).
+### Option 1: RealVwScript
+
+The easiest way to use next-real-vw is to just add the `<RealVwScript />` into your custom [`_app`](https://nextjs.org/docs/advanced-features/custom-app).
+
+```js
+// pages/_app.{js,tsx}
+
+import { RealVwScript } from "@basementstudio/next-real-vw";
+
+function MyApp({ Component, pageProps }) {
+  return (
+    <>
+      <RealVwScript />
+      <Component {...pageProps} />
+    </>
+  );
+}
+
+export default MyApp;
+```
+
+This component injects a script that calculates the real vw and sets a css variable, `--vw`, to use right away in your css.
+
+### Option 2: RealVwProvider (context)
+
+`next-real-vw` also works using React Context. Just use the exported provider anywhere you want to enjoy the _real_ vw. The recommended place to use it is in a custom [`_app`](https://nextjs.org/docs/advanced-features/custom-app).
 
 ```js
 // pages/_app.{js,tsx}
@@ -47,7 +72,13 @@ function MyApp({ Component, pageProps }) {
 export default MyApp;
 ```
 
-That's it, now you can use the css variables anywhere!
+This provider also injects the script mentioned earlier.
+
+## Use
+
+### In CSS
+
+You can use the css variables anywhere:
 
 ```css
 .fullWidth {
@@ -60,6 +91,8 @@ That's it, now you can use the css variables anywhere!
 ```
 
 ### useRealVw
+
+> Only works if using the `RealVwProvider`
 
 Maybe you don't want to use the css variables (i don't know why anyone might not want to, they're awesome). But here's how to get the absolute values:
 
