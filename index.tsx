@@ -63,4 +63,4 @@ const useRealVw = () => {
   return context;
 };
 
-export { RealVwProvider, cssVar, fullScreenCss, useRealVw };
+export { RealVwScript, RealVwProvider, cssVar, fullScreenCss, useRealVw };
