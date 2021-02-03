@@ -35,7 +35,7 @@ yarn add next-real-viewport
 
 ## Set Up
 
-### RealVwProvider (context)
+### RealViewportProvider (context)
 
 To start using `next-real-viewport`, simply use the exported provider anywhere you want. The recommended place to use it is in a custom [`_app`](https://nextjs.org/docs/advanced-features/custom-app).
 
@@ -71,7 +71,7 @@ You can use the css variables anywhere:
 }
 ```
 
-### useRealVw
+### useRealViewport
 
 Maybe you don't want to use the css variables (i don't know why anyone might not want to, they're awesome). But here's how to get the absolute values:
 
