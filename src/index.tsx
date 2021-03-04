@@ -6,6 +6,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import { debounce } from "./utils";
 
 const vwCssVar = "--vw";
 const vhCssVar = "--vh";
@@ -34,20 +35,30 @@ const RealViewportScript = memo(() => (
   </Head>
 ));
 
-const RealViewportProvider: React.FC = ({ children }) => {
-  const [value, setValue] = useState<Context>()
+type Props = {
+  debounceResize?: boolean;
+};
+
+const RealViewportProvider: React.FC<Props> = ({
+  children,
+  debounceResize = true,
+}) => {
+  const [value, setValue] = useState<Context>();
 
   useEffect(() => {
     function handleResize() {
-      const vw = (document.documentElement.clientWidth || window.innerWidth) / 100;
-      const vh = (document.documentElement.clientHeight || window.innerHeight) / 100;
+      const vw =
+        (document.documentElement.clientWidth || window.innerWidth) / 100;
+      const vh =
+        (document.documentElement.clientHeight || window.innerHeight) / 100;
       document.documentElement.style.setProperty(vwCssVar, `${vw}px`);
       document.documentElement.style.setProperty(vhCssVar, `${vh}px`);
       setValue({ vw, vh });
     }
     handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    const handler = debounceResize ? debounce(handleResize, 250) : handleResize;
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
   }, []);
 
   return (
@@ -61,10 +72,19 @@ const RealViewportProvider: React.FC = ({ children }) => {
 const useRealViewport = () => {
   const context = useContext(RealViewportContext);
   if (typeof context === "undefined") {
-    throw new Error("useRealViewport must be used below a <RealViewportProvider>");
+    throw new Error(
+      "useRealViewport must be used below a <RealViewportProvider>"
+    );
   }
   return context;
 };
 
-export { RealViewportProvider, vwCssVar, vhCssVar, fullWidthCss, fullHeightCss, useRealViewport };
-export { ViewportWidthBox, ViewportHeightBox } from './components'
+export {
+  RealViewportProvider,
+  vwCssVar,
+  vhCssVar,
+  fullWidthCss,
+  fullHeightCss,
+  useRealViewport,
+};
+export { ViewportWidthBox, ViewportHeightBox } from "./components";
