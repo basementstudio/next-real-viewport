@@ -43,7 +43,7 @@ const RealViewportProvider: React.FC<Props> = ({
   children,
   debounceResize = true,
 }) => {
-  const [value, setValue] = useState<Context>();
+  const [value, setValue] = useState<Context>({ vw: undefined, vh: undefined });
 
   useEffect(() => {
     function handleResize() {
@@ -58,7 +58,11 @@ const RealViewportProvider: React.FC<Props> = ({
     handleResize();
     const handler = debounceResize ? debounce(handleResize, 250) : handleResize;
     window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
+    window.addEventListener("orientationchange", handler);
+    return () => {
+      window.removeEventListener("resize", handler);
+      window.removeEventListener("orientationchange", handler);
+    };
   }, []);
 
   return (
@@ -71,7 +75,7 @@ const RealViewportProvider: React.FC<Props> = ({
 
 const useRealViewport = () => {
   const context = useContext(RealViewportContext);
-  if (typeof context === "undefined") {
+  if (context === undefined) {
     throw new Error(
       "useRealViewport must be used below a <RealViewportProvider>"
     );
