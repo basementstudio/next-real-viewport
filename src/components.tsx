@@ -1,5 +1,4 @@
 import React, { forwardRef } from "react";
-import { fullHeightCss, fullWidthCss } from "src";
 
 type WithCenterProps = JSX.IntrinsicElements["div"] & {
   center?: boolean;
@@ -10,7 +9,7 @@ const ViewportWidthBox = forwardRef<HTMLDivElement, WithCenterProps>(
     <div
       style={{
         ...style,
-        width: fullWidthCss,
+        width: "calc(var(--vw) * 100)",
         ...(center
           ? { position: "relative", transform: "translateX(-50%)", left: "50%" }
           : undefined),
@@ -25,7 +24,11 @@ const ViewportHeightBox = forwardRef<
   HTMLDivElement,
   JSX.IntrinsicElements["div"]
 >(({ style, ...rest }, ref) => (
-  <div style={{ ...style, height: fullHeightCss }} {...rest} ref={ref} />
+  <div
+    style={{ ...style, height: "calc(var(--vh) * 100)" }}
+    {...rest}
+    ref={ref}
+  />
 ));
 
 export { ViewportWidthBox, ViewportHeightBox };

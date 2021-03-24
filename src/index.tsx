@@ -8,10 +8,8 @@ import React, {
 } from "react";
 import { debounce } from "./utils";
 
-const vwCssVar = "--vw";
-const vhCssVar = "--vh";
-const fullWidthCss = `calc(var(${vwCssVar}) * 100)`;
-const fullHeightCss = `calc(var(${vhCssVar}) * 100)`;
+const vwCssVar = "vw";
+const vhCssVar = "vh";
 
 interface Context {
   vw: number | undefined;
@@ -20,15 +18,19 @@ interface Context {
 
 const RealViewportContext = createContext<Context | undefined>(undefined);
 
-const RealViewportScript = memo(() => (
+const RealViewportScript = memo(({ prefix }: { prefix: string }) => (
   <Head>
     <script
       key="real-viewport-script"
       dangerouslySetInnerHTML={{
         __html: `(function() {
             var d = document.documentElement;
-            d.style.setProperty('${vwCssVar}', (d.clientWidth || window.innerWidth) / 100 + 'px');
-            d.style.setProperty('${vhCssVar}', (d.clientHeight || window.innerHeight) / 100 + 'px');
+            d.style.setProperty('--${
+              prefix + vwCssVar
+            }', (d.clientWidth || window.innerWidth) / 100 + 'px');
+            d.style.setProperty('--${
+              prefix + vhCssVar
+            }', (d.clientHeight || window.innerHeight) / 100 + 'px');
         }())`,
       }}
     />
@@ -37,11 +39,13 @@ const RealViewportScript = memo(() => (
 
 type Props = {
   debounceResize?: boolean;
+  variablesPrefix?: string;
 };
 
 const RealViewportProvider: React.FC<Props> = ({
   children,
   debounceResize = true,
+  variablesPrefix = "",
 }) => {
   const [value, setValue] = useState<Context>({ vw: undefined, vh: undefined });
 
@@ -51,8 +55,14 @@ const RealViewportProvider: React.FC<Props> = ({
         (document.documentElement.clientWidth || window.innerWidth) / 100;
       const vh =
         (document.documentElement.clientHeight || window.innerHeight) / 100;
-      document.documentElement.style.setProperty(vwCssVar, `${vw}px`);
-      document.documentElement.style.setProperty(vhCssVar, `${vh}px`);
+      document.documentElement.style.setProperty(
+        "--" + variablesPrefix + vwCssVar,
+        `${vw}px`
+      );
+      document.documentElement.style.setProperty(
+        "--" + variablesPrefix + vhCssVar,
+        `${vh}px`
+      );
       setValue({ vw, vh });
     }
     handleResize();
@@ -63,11 +73,11 @@ const RealViewportProvider: React.FC<Props> = ({
       window.removeEventListener("resize", handler);
       window.removeEventListener("orientationchange", handler);
     };
-  }, []);
+  }, [variablesPrefix, debounceResize]);
 
   return (
     <RealViewportContext.Provider value={value}>
-      <RealViewportScript />
+      <RealViewportScript prefix={variablesPrefix} />
       {children}
     </RealViewportContext.Provider>
   );
@@ -83,12 +93,5 @@ const useRealViewport = () => {
   return context;
 };
 
-export {
-  RealViewportProvider,
-  vwCssVar,
-  vhCssVar,
-  fullWidthCss,
-  fullHeightCss,
-  useRealViewport,
-};
+export { RealViewportProvider, useRealViewport };
 export { ViewportWidthBox, ViewportHeightBox } from "./components";
