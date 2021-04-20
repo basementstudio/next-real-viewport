@@ -2,14 +2,15 @@ import React, { forwardRef } from "react";
 
 type WithCenterProps = JSX.IntrinsicElements["div"] & {
   center?: boolean;
+  useNativeValues?: boolean;
 };
 
 const ViewportWidthBox = forwardRef<HTMLDivElement, WithCenterProps>(
-  ({ style, center = true, ...rest }, ref) => (
+  ({ style, center = true, useNativeValues, ...rest }, ref) => (
     <div
       style={{
         ...style,
-        width: "calc(var(--vw) * 100)",
+        width: useNativeValues ? "100vw" : "calc(var(--vw) * 100)",
         ...(center
           ? { position: "relative", transform: "translateX(-50%)", left: "50%" }
           : undefined),
