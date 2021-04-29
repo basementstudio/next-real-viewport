@@ -1,0 +1,19 @@
+version: 2
+updates:
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "09:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: y18n
+    versions:
+    - 4.0.1
+    - 4.0.2
+  - dependency-name: "@types/react"
+    versions:
+    - 17.0.3
+  - dependency-name: typescript
+    versions:
+    - 4.2.3
