@@ -26,6 +26,6 @@
     "@types/next": "^9.0.0",
     "@types/react": "^16.9.53",
     "microbundle": "^0.12.3",
-    "typescript": "^4.0.3"
+    "typescript": "^4.3.5"
   }
 }
