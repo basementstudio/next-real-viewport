@@ -1,0 +1,112 @@
+import Head from "next/head";
+import React, {
+  createContext,
+  memo,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { useCallback } from "react";
+import { useIOSToolbarState } from "./hooks";
+import { debounce } from "./utils";
+
+const vwCssVar = "vw";
+const vhCssVar = "vh";
+
+interface Context {
+  vw: number | undefined;
+  vh: number | undefined;
+  isIOSToolbarVisible: boolean | undefined;
+}
+
+const RealViewportContext = createContext<Context | undefined>(undefined);
+
+const RealViewportScript = memo(({ prefix }: { prefix: string }) => (
+  <Head>
+    <script
+      key="real-viewport-script"
+      dangerouslySetInnerHTML={{
+        __html: `(function() {
+            var d = document.documentElement;
+            d.style.setProperty('--${
+              prefix + vwCssVar
+            }', (d.clientWidth || window.innerWidth) / 100 + 'px');
+            d.style.setProperty('--${
+              prefix + vhCssVar
+            }', (d.clientHeight || window.innerHeight) / 100 + 'px');
+        }())`,
+      }}
+    />
+  </Head>
+));
+
+type Props = {
+  debounceResize?: boolean;
+  variablesPrefix?: string;
+};
+
+const RealViewportProvider: React.FC<Props> = ({
+  children,
+  debounceResize = true,
+  variablesPrefix = "",
+}) => {
+  const [value, setValue] = useState<Pick<Context, "vw" | "vh">>({
+    vw: undefined,
+    vh: undefined,
+  });
+  const { isVisible } = useIOSToolbarState();
+
+  const handleResize = useCallback(() => {
+    const vw = parseFloat((window.innerWidth * 0.01).toFixed(4));
+    const vh = parseFloat((window.innerHeight * 0.01).toFixed(4));
+    document.documentElement.style.setProperty(
+      "--" + variablesPrefix + vwCssVar,
+      `${vw}px`
+    );
+    document.documentElement.style.setProperty(
+      "--" + variablesPrefix + vhCssVar,
+      `${vh}px`
+    );
+    setValue({ vw, vh });
+  }, [variablesPrefix]);
+
+  useEffect(() => {
+    handleResize();
+    const handler = debounceResize ? debounce(handleResize, 250) : handleResize;
+    window.addEventListener("resize", handler);
+    window.addEventListener("orientationchange", handler);
+    return () => {
+      window.removeEventListener("resize", handler);
+      window.removeEventListener("orientationchange", handler);
+    };
+  }, [variablesPrefix, debounceResize, isVisible, handleResize]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(handleResize, 200);
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [isVisible]);
+
+  return (
+    <RealViewportContext.Provider
+      value={{ ...value, isIOSToolbarVisible: isVisible }}
+    >
+      <RealViewportScript prefix={variablesPrefix} />
+      {children}
+    </RealViewportContext.Provider>
+  );
+};
+
+const useRealViewport = () => {
+  const context = useContext(RealViewportContext);
+  if (context === undefined) {
+    throw new Error(
+      "useRealViewport must be used below a <RealViewportProvider>"
+    );
+  }
+  return context;
+};
+
+export { RealViewportProvider, useRealViewport };
+export { ViewportWidthBox, ViewportHeightBox } from "./components";
