@@ -2,7 +2,7 @@
   "name": "next-real-viewport",
   "repository": "git://github.com/basementstudio/next-real-viewport.git",
   "author": "Julián Benegas <julian@basement.studio>",
-  "version": "0.6.2",
+  "version": "0.7.1",
   "main": "./dist/index.js",
   "module": "./dist/index.modern.js",
   "types": "./dist/index.d.ts",
@@ -17,15 +17,15 @@
   },
   "dependencies": {},
   "peerDependencies": {
-    "next": "*",
+    "next": "^12.1.0",
     "react": "*",
     "react-dom": "*"
   },
   "devDependencies": {
     "@babel/plugin-proposal-optional-chaining": "^7.11.0",
-    "@types/next": "^9.0.0",
     "@types/react": "^16.9.53",
     "microbundle": "^0.12.3",
+    "next": "^12.1.0",
     "typescript": "^4.0.3"
   }
 }

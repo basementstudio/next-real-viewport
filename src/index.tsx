@@ -1,4 +1,4 @@
-import Head from "next/head";
+import Script from "next/script";
 import React, {
   createContext,
   memo,
@@ -21,24 +21,30 @@ interface Context {
 
 const RealViewportContext = createContext<Context | undefined>(undefined);
 
-const RealViewportScript = memo(({ prefix }: { prefix: string }) => (
-  <Head>
-    <script
+const encodeBase64 = (str: string) => {
+  return typeof window !== "undefined"
+    ? window.btoa(str)
+    : Buffer.from(str).toString("base64");
+};
+
+const RealViewportScript = memo(({ prefix }: { prefix: string }) => {
+  const encodedScript = `data:text/javascript;base64,${encodeBase64(`(function() {
+    var d = document.documentElement;
+    d.style.setProperty('--${
+      prefix + vwCssVar
+    }', (d.clientWidth || window.innerWidth) / 100 + 'px');
+    d.style.setProperty('--${
+      prefix + vhCssVar
+    }', (d.clientHeight || window.innerHeight) / 100 + 'px');
+}())`)}`;
+  return (
+    <Script
       key="real-viewport-script"
-      dangerouslySetInnerHTML={{
-        __html: `(function() {
-            var d = document.documentElement;
-            d.style.setProperty('--${
-              prefix + vwCssVar
-            }', (d.clientWidth || window.innerWidth) / 100 + 'px');
-            d.style.setProperty('--${
-              prefix + vhCssVar
-            }', (d.clientHeight || window.innerHeight) / 100 + 'px');
-        }())`,
-      }}
+      strategy="beforeInteractive"
+      src={encodedScript}
     />
-  </Head>
-));
+  );
+});
 
 type Props = {
   debounceResize?: boolean;
