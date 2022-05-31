@@ -79,8 +79,8 @@ const RealViewportProvider: React.FC<Props> = ({
   useEffect(() => {
     handleResize();
     const handler = debounceResize ? debounce(handleResize, 250) : handleResize;
-    window.addEventListener("resize", handler);
-    window.addEventListener("orientationchange", handler);
+    window.addEventListener("resize", handler, { passive: true });
+    window.addEventListener("orientationchange", handler, { passive: true });
     return () => {
       window.removeEventListener("resize", handler);
       window.removeEventListener("orientationchange", handler);
