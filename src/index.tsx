@@ -47,6 +47,7 @@ const RealViewportScript = memo(({ prefix }: { prefix: string }) => {
 });
 
 type Props = {
+  children: React.ReactNode | Element;
   debounceResize?: boolean;
   variablesPrefix?: string;
 };
