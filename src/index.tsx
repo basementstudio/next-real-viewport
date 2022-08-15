@@ -46,12 +46,18 @@ const RealViewportScript = memo(({ prefix }: { prefix: string }) => {
   );
 });
 
+
+/**
+ *  After React 18 the type React.FC does not provide a children prop anymore,
+ *  therefore it is necessary to manually add the type using the helper 
+ *  React.PropsWithChildren or the prop 'children: React.ReactNode'
+ */
 type Props = {
   debounceResize?: boolean;
   variablesPrefix?: string;
 };
 
-const RealViewportProvider: React.FC<Props> = ({
+const RealViewportProvider: React.FC<React.PropsWithChildren<Props>> = ({
   children,
   debounceResize = true,
   variablesPrefix = "",
