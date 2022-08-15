@@ -2,7 +2,7 @@
   "name": "next-real-viewport",
   "repository": "git://github.com/basementstudio/next-real-viewport.git",
   "author": "Julián Benegas <julian@basement.studio>",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "main": "./dist/index.js",
   "module": "./dist/index.modern.js",
   "types": "./dist/index.d.ts",
